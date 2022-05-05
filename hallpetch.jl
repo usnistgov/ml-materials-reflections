@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.3
+# v0.18.0
 
 using Markdown
 using InteractiveUtils
@@ -137,6 +137,42 @@ let
 	
 	xlabel!(L"\log_{10}(\mathrm{ grain size } \; (\mu m))")
 	ylabel!(L"\mathrm{flow \; stress } \; (MPa)")
+	
+	# xlims!(1e-3, 10^2.5)
+	# ylims!(0.0, 2000)
+	ylims!(-200, 2000)
+	hline!([0.0], color=:black, label=nothing)
+end
+
+# ╔═╡ 219d43d6-066a-43af-a24b-2c788d3bed66
+let
+	# show data
+	scatter(x, y, xaxis=:log, label=nothing, color=:black, alpha=0.5)
+
+	# show underlying "true" model
+	plot!(
+		d, max.(s0 .+ hallpetch.(d) .+ inv_hallpetch.(d), 10), 
+		label=L"\mathrm{true \; flow \; stress}", 
+		color=:black, linewidth=2, linestyle=:dash
+	)
+
+	# show GP posterior
+	x_plot = range(-3.0, 3.0; length=1000);
+    xp = GPPPInput(:f1, x_plot);
+	ms_opt = marginals(f_post_opt(xp));
+	plot!(
+        10 .^ x_plot, mean.(ms_opt);
+        ribbon=3std.(ms_opt), color=:blue, fillalpha=0.2, linewidth=2,
+		label=L"\mathrm{Gaussian \; Process \; model}"
+    );
+
+	# show separate components of true model	
+	# shift and scale 1/d component for illustrative purposes
+	plot!(d, s0 .+ hallpetch.(d), label=L"1/\sqrt{\mathrm{grain\;size}}", linewidth=2)
+	plot!(d, 1600 .+ 0.3 .* inv_hallpetch.(d), label=L"\textrm{1 / grain \; size}", linewidth=2)
+	
+	xlabel!(L"\log_{10}(\mathrm{ grain \; size } \; (\mathrm{\mu m}))")
+	ylabel!(L"\mathrm{flow \; stress } \; (\mathrm{MPa})")
 	
 	# xlims!(1e-3, 10^2.5)
 	# ylims!(0.0, 2000)
@@ -693,6 +729,12 @@ git-tree-sha1 = "f6250b16881adf048549549fba48b1161acdac8c"
 uuid = "c1c5ebd0-6772-5130-a774-d5fcae4a789d"
 version = "3.100.1+0"
 
+[[LERC_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "bf36f528eec6634efc60d7ec062008f171071434"
+uuid = "88015f11-f218-50d7-93a8-a6af411a945d"
+version = "3.0.0+1"
+
 [[LZO_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "e5b909bcf985c5e2605737d2ce278ed791b89be6"
@@ -776,10 +818,10 @@ uuid = "4b2f31a3-9ecc-558c-b454-b3730dcb73e9"
 version = "2.35.0+0"
 
 [[Libtiff_jll]]
-deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Pkg", "Zlib_jll", "Zstd_jll"]
-git-tree-sha1 = "340e257aada13f95f98ee352d316c3bed37c8ab9"
+deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "Pkg", "Zlib_jll", "Zstd_jll"]
+git-tree-sha1 = "c9551dd26e31ab17b86cbd00c2ede019c08758eb"
 uuid = "89763e89-9b03-5906-acba-b20f662cd828"
-version = "4.3.0+0"
+version = "4.3.0+1"
 
 [[Libuuid_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -794,7 +836,7 @@ uuid = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 version = "7.1.1"
 
 [[LinearAlgebra]]
-deps = ["Libdl"]
+deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[LogExpFunctions]]
@@ -1042,9 +1084,9 @@ uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
 [[Qt5Base_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
-git-tree-sha1 = "ad368663a5e20dbb8d6dc2fddeefe4dae0781ae8"
+git-tree-sha1 = "c6c0f690d0cc7caddb74cef7aa847b824a16b256"
 uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
-version = "5.15.3+0"
+version = "5.15.3+1"
 
 [[QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
@@ -1057,7 +1099,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[Random]]
-deps = ["Serialization"]
+deps = ["SHA", "Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[Ratios]]
@@ -1522,6 +1564,10 @@ git-tree-sha1 = "5982a94fcba20f02f42ace44b9894ee2b140fe47"
 uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.15.1+0"
 
+[[libblastrampoline_jll]]
+deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
+
 [[libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "daacc84a041563f965be61859a36e17c4e4fcd55"
@@ -1536,9 +1582,9 @@ version = "1.6.38+0"
 
 [[libvorbis_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Ogg_jll", "Pkg"]
-git-tree-sha1 = "c45f4e40e7aafe9d086379e5578947ec8b95a8fb"
+git-tree-sha1 = "b910cb81ef3fe6e78bf6acee440bda86fd6ae00c"
 uuid = "f27f6e37-5d2b-51aa-960f-b287f2bc3b7a"
-version = "1.3.7+0"
+version = "1.3.7+1"
 
 [[nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -1576,5 +1622,6 @@ version = "0.9.1+5"
 # ╠═b54c0b85-d1d8-4fab-9fcc-515302738fbb
 # ╠═ce663279-358e-4489-9d8a-d7473473248f
 # ╠═9ab4baa7-0cf6-4c8d-917b-8dd6c7bb0464
+# ╠═219d43d6-066a-43af-a24b-2c788d3bed66
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
